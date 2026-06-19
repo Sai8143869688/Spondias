@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Spondias — Verify OTP</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#040e24;
+  --navy-mid:#071530;
+  --blue-deep:#0a2252;
+  --blue-brand:#0d6efd;
+  --blue-light:#1e90ff;
+  --blue-glow:#3db5ff;
+  --blue-ultra:#60c8ff;
+  --white:#fff;
+  --w60:rgba(255,255,255,0.6);
+  --w30:rgba(255,255,255,0.3);
+  --w15:rgba(255,255,255,0.1);
+  --w08:rgba(255,255,255,0.06);
+  --card:#040e24cc;
+  --ib:rgba(255,255,255,0.13);
+  --r:14px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--white);overflow:hidden}
+#bg{position:fixed;inset:0;z-index:0}
+.page{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px 16px}
+
+/* ── card ── */
+.card{
+  display:flex;width:100%;max-width:920px;min-height:560px;
+  border-radius:28px;overflow:hidden;
+  backdrop-filter:blur(32px) saturate(180%);
+  -webkit-backdrop-filter:blur(32px) saturate(180%);
+  background:var(--card);
+  border:1px solid rgba(255,255,255,0.09);
+  box-shadow:0 0 0 1px rgba(13,110,253,0.2),0 32px 100px rgba(4,14,36,0.85),inset 0 1px 0 rgba(255,255,255,0.07);
+  animation:cardIn .9s cubic-bezier(.22,1,.36,1) both
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(.96)}to{opacity:1;transform:none}}
+
+/* ══ LEFT ══ */
+.left{
+  width:44%;flex-shrink:0;
+  background:linear-gradient(155deg,#0c2560 0%,#071a40 45%,#030b1e 100%);
+  padding:48px 36px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden
+}
+.left::after{
+  content:'';position:absolute;top:0;right:0;width:1px;height:100%;
+  background:linear-gradient(180deg,transparent,rgba(13,110,253,.6) 40%,rgba(61,181,255,.8) 60%,transparent);
+  animation:borderFlow 3s ease-in-out infinite
+}
+@keyframes borderFlow{0%,100%{opacity:.3;transform:scaleY(.6) translateY(-20%)}50%{opacity:1;transform:scaleY(1) translateY(0)}}
+.left .ring{position:absolute;border-radius:50%;border:1px solid rgba(13,110,253,.18);pointer-events:none}
+.ring-1{width:380px;height:380px;bottom:-130px;left:-100px;animation:ringPulse 6s ease-in-out infinite alternate}
+.ring-2{width:200px;height:200px;top:-50px;right:-60px;border-color:rgba(61,181,255,.15);animation:ringPulse 8s ease-in-out infinite alternate-reverse}
+.ring-3{width:120px;height:120px;top:50%;left:50%;transform:translate(-50%,-50%);border-color:rgba(13,110,253,.1);animation:ringPulse 5s 1s ease-in-out infinite alternate}
+@keyframes ringPulse{from{opacity:.3;transform:scale(1)}to{opacity:.8;transform:scale(1.07)}}
+
+.left-logo{animation:fadeUp .7s .1s both}
+.spondias-logo{width:210px;max-width:100%;filter:drop-shadow(0 0 18px rgba(61,181,255,.5)) brightness(1.0)}
+
+.left-hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:28px 0;animation:fadeUp .7s .25s both}
+.eyebrow-tag{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:600;letter-spacing:2.8px;text-transform:uppercase;color:var(--blue-glow);margin-bottom:18px;opacity:.9}
+.eyebrow-tag::before{content:'';width:24px;height:1px;background:var(--blue-glow)}
+.left-hero h2{font-family:'Outfit',sans-serif;font-size:clamp(1.55rem,2.8vw,1.95rem);font-weight:800;line-height:1.2;color:var(--white);margin-bottom:14px;letter-spacing:-.3px}
+.left-hero h2 em{font-style:normal;background:linear-gradient(90deg,var(--blue-light),var(--blue-ultra));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.left-hero p{font-size:.88rem;line-height:1.7;color:var(--w60);max-width:260px}
+
+.trust-row{display:flex;gap:10px;flex-wrap:wrap;animation:fadeUp .7s .4s both}
+.badge{display:flex;align-items:center;gap:6px;background:rgba(13,110,253,.12);border:1px solid rgba(13,110,253,.25);border-radius:50px;padding:7px 14px;font-size:.75rem;color:var(--white);font-weight:500}
+.badge svg{flex-shrink:0}
+
+/* ══ RIGHT ══ */
+.right{flex:1;padding:clamp(36px,5vw,52px) clamp(28px,5vw,50px);display:flex;flex-direction:column;justify-content:center}
+
+.form-head{margin-bottom:20px;animation:fadeUp .7s .2s both}
+.form-head .pre{font-size:.7rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--blue-glow);margin-bottom:8px}
+.form-head h1{font-family:'Outfit',sans-serif;font-size:clamp(1.6rem,3.2vw,2.1rem);font-weight:800;color:var(--white);letter-spacing:-.4px;line-height:1.1}
+.form-head p{font-size:.86rem;color:var(--w60);margin-top:7px;font-style:italic}
+
+/* sent-to chip */
+.sent-to-chip{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(13,110,253,.12);border:1px solid rgba(13,110,253,.25);
+  border-radius:50px;padding:7px 14px;font-size:.78rem;color:var(--blue-ultra);font-weight:600;
+  margin-bottom:22px;animation:fadeUp .7s .3s both
+}
+.sent-to-chip svg{width:13px;height:13px;flex-shrink:0}
+
+/* OTP Boxes */
+.otp-label{font-size:.7rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:14px;text-align:center;animation:fadeUp .7s .35s both}
+
+.otp-inputs-row{display:flex;justify-content:center;gap:10px;margin-bottom:16px;animation:fadeUp .7s .4s both}
+.otp-box{
+  width:50px;height:56px;
+  border:1.5px solid var(--ib);border-radius:12px;
+  font-size:1.45rem;font-weight:700;color:var(--white);text-align:center;
+  background:var(--w08);outline:none;
+  transition:border-color .2s,background .2s,box-shadow .2s,transform .15s;
+  caret-color:var(--blue-brand);
+  font-family:'Outfit',sans-serif;
+  -webkit-appearance:none;appearance:none
+}
+.otp-box:focus{
+  border-color:var(--blue-brand);background:rgba(13,110,253,.08);
+  box-shadow:0 0 0 4px rgba(13,110,253,.15),0 0 20px rgba(13,110,253,.1);
+  transform:translateY(-2px)
+}
+.otp-box.filled{border-color:rgba(61,181,255,.5);background:rgba(13,110,253,.1);color:var(--blue-ultra)}
+.otp-box.is-invalid{border-color:#e7515a;background:rgba(231,81,90,.08);animation:shake .35s ease}
+.otp-box.is-success{border-color:rgba(0,200,120,.6);background:rgba(0,200,120,.08);color:#4dffb4}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+input[type=text].otp-box:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #071530 inset;-webkit-text-fill-color:#fff}
+
+/* hint row */
+.otp-hint-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;animation:fadeUp .7s .45s both}
+.otp-error-msg{font-size:.77rem;color:#ff7b85;display:none;align-items:center;gap:5px}
+.otp-error-msg svg{width:13px;height:13px}
+.otp-error-msg.visible{display:flex}
+.otp-timer{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--w60);font-weight:600}
+.otp-timer svg{width:13px;height:13px}
+.timer-val{color:var(--blue-glow)}
+.timer-val.expiring{color:#ff7b85}
+
+/* progress bar */
+.otp-progress-track{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:14px;overflow:hidden;animation:fadeUp .7s .48s both}
+.otp-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue-brand),var(--blue-ultra));border-radius:2px;transition:width 1s linear,background 1s}
+.otp-progress-fill.expiring{background:linear-gradient(90deg,#e7515a,#ff7b7b)}
+
+/* resend */
+.resend-row{text-align:center;margin-bottom:18px;font-size:.81rem;color:var(--w60);animation:fadeUp .7s .5s both}
+.btn-resend{background:none;border:none;color:var(--blue-light);font-weight:700;font-size:.81rem;cursor:pointer;padding:0;transition:opacity .2s}
+.btn-resend:disabled{opacity:.4;cursor:not-allowed}
+.btn-resend:not(:disabled):hover{color:var(--blue-ultra)}
+
+/* submit btn */
+.btn{
+  width:100%;padding:15px;
+  background:linear-gradient(90deg,var(--blue-brand) 0%,var(--blue-light) 60%,var(--blue-ultra) 100%);
+  background-size:200% 100%;
+  color:#fff;border:none;border-radius:var(--r);
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.6px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .18s,box-shadow .18s,background-position .4s;
+  box-shadow:0 8px 32px rgba(13,110,253,.45);
+  animation:fadeUp .7s .55s both;
+  display:flex;align-items:center;justify-content:center;gap:8px
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(13,110,253,.6);background-position:100% 0}
+.btn:active{transform:translateY(0)}
+.btn .sheen{position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);transform:translateX(-100%);transition:transform .55s}
+.btn:hover .sheen{transform:translateX(100%)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn .spinner{display:none;width:17px;height:17px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* back link */
+.back-link{text-align:center;font-size:.83rem;color:var(--w60);margin-top:14px;animation:fadeUp .7s .65s both}
+.back-link a{color:var(--blue-light);text-decoration:none;font-weight:600;transition:color .2s;display:inline-flex;align-items:center;gap:6px}
+.back-link a:hover{color:var(--blue-ultra)}
+
+/* ── Success state ── */
+.success-state{
+  display:none;flex-direction:column;align-items:center;text-align:center;
+  animation:fadeUp .5s both
+}
+.success-ring{width:76px;height:76px;border-radius:50%;background:rgba(13,110,253,.12);border:2px solid rgba(13,110,253,.3);display:flex;align-items:center;justify-content:center;margin-bottom:16px;animation:pulseRing 2.5s ease-in-out infinite}
+@keyframes pulseRing{0%,100%{box-shadow:0 0 0 0 rgba(13,110,253,.2)}50%{box-shadow:0 0 0 12px rgba(13,110,253,0)}}
+.success-ring svg{width:34px;height:34px;color:var(--blue-glow)}
+.success-state h3{font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:800;color:var(--white);margin-bottom:8px}
+.success-state p{font-size:.85rem;color:var(--w60);line-height:1.7;max-width:300px;margin-bottom:22px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* Responsive */
+@media(max-width:700px){
+  html,body{overflow:auto}
+  .card{flex-direction:column;min-height:unset;border-radius:20px}
+  .left{width:100%;padding:36px 28px 32px}
+  .left::after{display:none}
+  .right{padding:36px 28px 44px}
+  .otp-box{width:44px;height:50px;font-size:1.3rem}
+}
+@media(max-width:420px){
+  .trust-row{gap:8px}
+  .badge{font-size:.7rem;padding:6px 11px}
+  .otp-box{width:38px;height:46px;font-size:1.2rem;border-radius:10px}
+  .otp-inputs-row{gap:7px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="page">
+ <div class="card">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+    <div class="ring ring-3"></div>
+
+    <div class="left-logo">
+      <img src="spondias_newlogo.png" alt="Spondias" class="spondias-logo">
+    </div>
+
+    <div class="left-hero">
+      <p class="eyebrow-tag">OTP Verification</p>
+      <h2>Verify your <em>Identity</em> Securely</h2>
+      <p>Enter the 6-digit code sent to your email to confirm your identity and reset your password.</p>
+    </div>
+
+    <div class="trust-row">
+      <div class="badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3db5ff" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Secure Code
+      </div>
+      <div class="badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3db5ff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        10 Min Expiry
+      </div>
+      <div class="badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3db5ff" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        6-Digit OTP
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <!-- Main OTP area -->
+    <div id="otpArea">
+      <div class="form-head">
+        <p class="pre">Step 2 of 3</p>
+        <h1>Enter OTP</h1>
+        <p>Code sent to your email address</p>
+      </div>
+
+      <div class="sent-to-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span id="sentToEmail">your email</span>
+      </div>
+
+      <form id="otpForm" method="POST" action="verify_otp_process.php" novalidate>
+        <input type="hidden" name="csrf_token" value="">
+        <input type="hidden" name="otp_combined" id="otpCombined">
+
+        <p class="otp-label">Enter 6-Digit Code</p>
+
+        <div class="otp-inputs-row">
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="otp1">
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="otp2">
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="otp3">
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="otp4">
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="otp5">
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" id="otp6">
+        </div>
+
+        <div class="otp-hint-row">
+          <div class="otp-error-msg" id="otpErrorMsg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="otpErrorText">Please enter all 6 digits.</span>
+          </div>
+          <div class="otp-timer" id="otpTimer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Expires in <span class="timer-val" id="timerDisplay">10:00</span>
+          </div>
+        </div>
+
+        <div class="otp-progress-track">
+          <div class="otp-progress-fill" id="otpProgressFill" style="width:100%"></div>
+        </div>
+
+        <div class="resend-row">
+          Didn't receive it?&nbsp;
+          <button type="button" class="btn-resend" id="resendBtn" disabled>Resend OTP</button>
+          <span id="resendCountdown"> (wait <span id="resendSecs">60</span>s)</span>
+        </div>
+
+        <button type="submit" class="btn" id="verifyBtn">
+          <span class="sheen"></span>
+          <span class="spinner" id="verifySpinner"></span>
+          <svg id="verifyIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="btn-text">Verify OTP</span>
+        </button>
+      </form>
+
+      <div class="back-link">
+        <a href="forgot_password.php">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </a>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div class="success-state" id="successState">
+      <div class="success-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h3>OTP Verified!</h3>
+      <p>Your identity has been confirmed. You'll now be redirected to reset your password.</p>
+      <a href="reset_password.php" class="btn" style="text-decoration:none">
+        <span class="sheen"></span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span class="btn-text">Reset Password →</span>
+      </a>
+    </div>
+
+  </div><!-- .right -->
+ </div><!-- .card -->
+</div><!-- .page -->
+
+<script>
+/* ═══════════════ Three.js Background ═══════════════ */
+(function () {
+  const canvas = document.getElementById('bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x040e24, 1);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 0, 28);
+
+  const pCount = 320;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  const pSz  = new Float32Array(pCount);
+  for (let i = 0; i < pCount; i++) {
+    pPos[i*3]   = (Math.random()-.5)*80;
+    pPos[i*3+1] = (Math.random()-.5)*60;
+    pPos[i*3+2] = (Math.random()-.5)*40;
+    pSz[i] = Math.random()*2.5+.5;
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  pGeo.setAttribute('size',     new THREE.BufferAttribute(pSz, 1));
+  const pMat = new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0},uColor:{value:new THREE.Color(0x1e90ff)}},
+    vertexShader:`attribute float size;uniform float uTime;void main(){vec3 pos=position;pos.y+=sin(uTime*.5+pos.x*.1)*.5;pos.x+=cos(uTime*.3+pos.z*.1)*.3;vec4 mvPos=modelViewMatrix*vec4(pos,1.);gl_PointSize=size*(300./-mvPos.z);gl_Position=projectionMatrix*mvPos;}`,
+    fragmentShader:`uniform vec3 uColor;void main(){float d=length(gl_PointCoord-vec2(.5));if(d>.5)discard;float alpha=smoothstep(.5,0.,d)*.75;gl_FragColor=vec4(uColor,alpha);}`,
+    transparent:true,depthWrite:false
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  const gridGeo = new THREE.PlaneGeometry(80,80,30,30);
+  const gridMat = new THREE.ShaderMaterial({
+    uniforms:{uTime:{value:0}},
+    vertexShader:`uniform float uTime;varying vec3 vPos;void main(){vPos=position;vec3 pos=position;float dist=length(pos.xy)/40.;pos.z+=sin(uTime*.6+dist*6.)*1.2*(1.-dist);gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.);}`,
+    fragmentShader:`varying vec3 vPos;void main(){float dist=length(vPos.xy)/40.;float alpha=(1.-dist)*.22;gl_FragColor=vec4(.08,.43,.99,alpha);}`,
+    transparent:true,wireframe:true,depthWrite:false
+  });
+  const grid = new THREE.Mesh(gridGeo, gridMat);
+  grid.rotation.x=-Math.PI/2.8;grid.position.y=-12;grid.position.z=-5;
+  scene.add(grid);
+
+  function makeGlowTexture(hex){const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');const r=new THREE.Color(hex);const g=ctx.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,`rgba(${Math.round(r.r*255)},${Math.round(r.g*255)},${Math.round(r.b*255)},.9)`);g.addColorStop(.4,`rgba(${Math.round(r.r*255)},${Math.round(r.g*255)},${Math.round(r.b*255)},.4)`);g.addColorStop(1,`rgba(${Math.round(r.r*255)},${Math.round(r.g*255)},${Math.round(r.b*255)},0)`);ctx.fillStyle=g;ctx.fillRect(0,0,256,256);return new THREE.CanvasTexture(c);}
+  function makeOrb(r,color,x,y,z){const m=new THREE.SpriteMaterial({map:makeGlowTexture(color),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false});const s=new THREE.Sprite(m);s.scale.set(r*14,r*14,1);s.position.set(x,y,z);scene.add(s);return s;}
+  const orb1=makeOrb(3.5,0x0d6efd,-14,6,-10);
+  const orb2=makeOrb(2.2,0x3db5ff,16,-5,-8);
+  const orb3=makeOrb(1.5,0x1e90ff,0,10,-15);
+
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/window.innerWidth-.5)*2;my=(e.clientY/window.innerHeight-.5)*2;});
+  window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+
+  const clock=new THREE.Clock();
+  (function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    pMat.uniforms.uTime.value=t;gridMat.uniforms.uTime.value=t;
+    orb1.position.y=6+Math.sin(t*.7)*1.5;orb1.material.opacity=.45+Math.sin(t*1.1)*.15;
+    orb2.position.y=-5+Math.cos(t*.5)*2;orb2.material.opacity=.35+Math.cos(t*.8)*.1;
+    orb3.position.x=Math.sin(t*.3)*4;orb3.material.opacity=.25+Math.sin(t*1.4)*.1;
+    camera.position.x+=(mx*1.5-camera.position.x)*.04;
+    camera.position.y+=(-my*1.-camera.position.y)*.04;
+    camera.lookAt(0,0,0);
+    particles.rotation.y=t*.015;
+    renderer.render(scene,camera);
+  })();
+})();
+
+/* ── Load email from sessionStorage ── */
+(function(){
+  const email = sessionStorage.getItem('reset_email') || '';
+  if (email) document.getElementById('sentToEmail').textContent = email;
+})();
+
+/* ── OTP Box behaviour ── */
+const boxes = Array.from(document.querySelectorAll('.otp-box'));
+
+boxes.forEach((box, i) => {
+  box.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(-1);
+    if (this.value) { this.classList.add('filled'); if (i < 5) boxes[i+1].focus(); }
+    else { this.classList.remove('filled'); }
+    clearError();
+  });
+  box.addEventListener('keydown', function(e) {
+    if (e.key === 'Backspace' && !this.value && i > 0) {
+      boxes[i-1].focus(); boxes[i-1].value = ''; boxes[i-1].classList.remove('filled');
+    }
+    if (e.key === 'ArrowLeft'  && i > 0) boxes[i-1].focus();
+    if (e.key === 'ArrowRight' && i < 5) boxes[i+1].focus();
+  });
+  box.addEventListener('paste', function(e) {
+    e.preventDefault();
+    const pasted = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+    pasted.split('').forEach((ch,idx)=>{ if(boxes[idx]){boxes[idx].value=ch;boxes[idx].classList.add('filled');} });
+    boxes[Math.min(pasted.length,5)].focus();
+    clearError();
+  });
+});
+
+function showError(msg){ document.getElementById('otpErrorText').textContent=msg; document.getElementById('otpErrorMsg').classList.add('visible'); boxes.forEach(b=>b.classList.add('is-invalid')); }
+function clearError(){ document.getElementById('otpErrorMsg').classList.remove('visible'); boxes.forEach(b=>b.classList.remove('is-invalid')); }
+
+/* ── OTP Timer (10 min) ── */
+const OTP_DURATION = 60;
+let remaining = OTP_DURATION;
+const timerDisplay  = document.getElementById('timerDisplay');
+const progressFill  = document.getElementById('otpProgressFill');
+const timerValEl    = document.querySelector('.timer-val');
+const resendBtn     = document.getElementById('resendBtn');
+const resendCountdown = document.getElementById('resendCountdown');
+const resendSecsEl  = document.getElementById('resendSecs');
+let resendRemaining = 60;
+
+function formatTime(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+const timerInterval = setInterval(()=>{
+  remaining--;
+  timerDisplay.textContent = formatTime(remaining);
+  progressFill.style.width = (remaining/OTP_DURATION*100)+'%';
+  if (remaining <= 60){ timerValEl.classList.add('expiring'); progressFill.classList.add('expiring'); }
+  if (remaining <= 0){
+    clearInterval(timerInterval);
+    timerDisplay.textContent='00:00'; progressFill.style.width='0%';
+    showError('OTP has expired. Please request a new one.');
+    boxes.forEach(b=>{b.disabled=true;b.classList.add('is-invalid')});
+    document.getElementById('verifyBtn').disabled=true;
+  }
+},1000);
+
+const resendInterval = setInterval(()=>{
+  resendRemaining--;
+  resendSecsEl.textContent = resendRemaining;
+  if(resendRemaining<=0){ clearInterval(resendInterval); resendBtn.disabled=false; resendCountdown.style.display='none'; }
+},1000);
+
+resendBtn.addEventListener('click', function(){
+  this.disabled=true; resendCountdown.style.display=''; resendRemaining=60; resendSecsEl.textContent=60;
+  remaining=OTP_DURATION; timerValEl.classList.remove('expiring'); progressFill.classList.remove('expiring'); progressFill.style.width='100%';
+  boxes.forEach(b=>{b.value='';b.classList.remove('filled','is-invalid');b.disabled=false;});
+  clearError(); boxes[0].focus();
+  const ri=setInterval(()=>{ resendRemaining--; resendSecsEl.textContent=resendRemaining; if(resendRemaining<=0){clearInterval(ri);resendBtn.disabled=false;resendCountdown.style.display='none';} },1000);
+});
+
+/* ── Submit ── */
+document.getElementById('otpForm').addEventListener('submit', function(e){
+  e.preventDefault(); clearError();
+  const combined = boxes.map(b=>b.value).join('');
+  if (combined.length < 6){ showError('Please enter all 6 digits.'); return; }
+  if (!/^\d{6}$/.test(combined)){ showError('OTP must contain digits only.'); return; }
+  document.getElementById('otpCombined').value = combined;
+
+  const btn     = document.getElementById('verifyBtn');
+  const spinner = document.getElementById('verifySpinner');
+  const icon    = document.getElementById('verifyIcon');
+  const text    = btn.querySelector('.btn-text');
+  btn.disabled=true; spinner.style.display='block'; icon.style.display='none'; text.style.opacity='.5';
+
+  setTimeout(()=>{
+    boxes.forEach(b=>{b.classList.remove('is-invalid');b.classList.add('is-success');});
+    setTimeout(()=>{
+      document.getElementById('otpArea').style.display='none';
+      document.getElementById('successState').style.display='flex';
+      // In production: this.submit();
+    }, 600);
+  }, 1600);
+});
+
+/* ── Auto-focus first box ── */
+boxes[0].focus();
+</script>
+</body>
+</html>
